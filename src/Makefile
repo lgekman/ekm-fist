@@ -24,4 +24,4 @@ $(O):
 	mkdir -p $(O)
 
 clean:
-	rm -r $(OBJ)
+	rm -f $(OBJ) $(O)/fist-test
