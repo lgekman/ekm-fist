@@ -58,20 +58,18 @@ static void fistPassThrough_sourceerror(
 	if (source->error != NULL) source->error(source, reason, reason_str);
 }
 
-static int fistPassThrough_write(
-	struct FistSink* obj, int len, char const* data)
+static int fistPassThrough_writev(
+	struct FistSink* obj, const struct iovec *iov, int iovcnt)
 {
 	struct FistFilter* fp = container_of(obj, struct FistFilter, sink);
 	struct FistSink* sink = fp->source.sink; /* The down-stream sink */
-	return sink->write(sink, len, data);
+	return sink->writev(sink, iov, iovcnt);
 }
 
 void fistFilter_init(struct FistFilter* obj)
 {
 	memset(obj, 0, sizeof(*obj));
-	obj->sink.write = fistPassThrough_write;
+	obj->sink.writev = fistPassThrough_writev;
 	obj->sink.error = fistPassThrough_sinkerror;
 	obj->source.error = fistPassThrough_sourceerror;
 }
-
-

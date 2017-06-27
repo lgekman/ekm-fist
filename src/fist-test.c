@@ -16,7 +16,7 @@ static void test_sink_buffer(void)
 	struct FistSource source = {NULL, NULL};
 	struct FistSink* fs = fistSinkBuffer_create(&source);
 	assert(fs != NULL);
-	assert(fs->write != NULL);
+	assert(fs->writev != NULL);
 	assert(fs->error != NULL);
 	assert(fistSinkBuffer_len(fs) == 0);
 	assert(fistSinkBuffer_data(fs) == NULL);
@@ -25,14 +25,17 @@ static void test_sink_buffer(void)
 
 	static char const* const msg = "Hello world\n";
 	int len = strlen(msg)+1;
-	int rc = source.sink->write(source.sink, len, msg);
+	struct iovec iov = {(void*)msg, len};
+	int rc = source.sink->writev(source.sink, &iov, 1);
 	assert(rc == len);
 	assert(fistSinkBuffer_len(fs) == len);
 	assert(fistSinkBuffer_data(fs) != NULL);
 	assert(strcmp(fistSinkBuffer_data(fs), msg) == 0);
 
 	char dbuf[2000];
-	rc = source.sink->write(source.sink, sizeof(dbuf), dbuf);
+	iov.iov_base = dbuf;
+	iov.iov_len = sizeof(dbuf);
+	rc = source.sink->writev(source.sink, &iov, 1);
 	assert(rc == sizeof(dbuf));
 	assert(fistSinkBuffer_len(fs) == (len + sizeof(dbuf)));
 	assert(fistSinkBuffer_data(fs) != NULL);
@@ -61,7 +64,8 @@ static void test_pass_through(void)
 
 	static char const* const msg = "Hello world\n";
 	int len = strlen(msg)+1;
-	int rc = source.sink->write(source.sink, len, msg);
+	struct iovec iov = {(void*)msg, len};
+	int rc = source.sink->writev(source.sink, &iov, 1);
 	assert(rc == len);
 	assert(fistSinkBuffer_len(fs) == len);
 	assert(fistSinkBuffer_data(fs) != NULL);

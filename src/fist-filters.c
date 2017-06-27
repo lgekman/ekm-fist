@@ -24,15 +24,26 @@ struct FistSinkBuffer {
 	char* data;
 };
 
-static int fistSinkBuffer_write_fn(
-	struct FistSink* obj, int len, char const* data)
+static int fistSinkBuffer_writev_fn(
+	struct FistSink* obj, const struct iovec *iov, int iovcnt)
 {
 	struct FistSinkBuffer* sb = container_of(obj, struct FistSinkBuffer, sink);
+	size_t len = 0;
+	int i;
+	const struct iovec *ip;
+	for (i = 0, ip = iov; i < iovcnt; i++, ip++) {
+		len += ip->iov_len;
+	}
 	if (sb->len + len > sb->avail) {
 		sb->avail += (len + 1024);
 		sb->data = realloc(sb->data, sb->avail);
 	}
-	memcpy(sb->data + sb->len, data, len);
+	char* cp = sb->data + sb->len;
+	for (i = 0, ip = iov; i < iovcnt; i++, ip++) {
+		memcpy(cp, ip->iov_base, ip->iov_len);
+		cp += ip->iov_len;
+	}
+
 	sb->len += len;
 	return len;
 }
@@ -47,7 +58,7 @@ struct FistSink* fistSinkBuffer_create(struct FistSource* source)
 {
 	assert(source != NULL);
 	struct FistSinkBuffer* sb = calloc(1, sizeof(struct FistSinkBuffer));
-	sb->sink.write = fistSinkBuffer_write_fn;
+	sb->sink.writev = fistSinkBuffer_writev_fn;
 	sb->sink.error = fistSinkBuffer_sinkerror;
 	sb->sink.source = source;
 	source->sink = &sb->sink;

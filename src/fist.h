@@ -7,6 +7,8 @@
  *
  */
 
+#include <sys/uio.h>
+
 #define FIST_ALIGN(x) (((x) + 3)&((int)0 - 4))
 struct FistSink;
 struct FistSource;
@@ -14,11 +16,10 @@ struct FistSource;
 /*
  * Write data to a sink-node.
  *
- * len=0 means End-of-Data. 
  * @returns; The number of bytes "consumed", or <0 in case of error.
  */
-typedef int (*fistWriteFn_t)(
-	struct FistSink* obj, int len, char const* data);
+typedef int (*fistWritevFn_t)(
+	struct FistSink* obj, const struct iovec *iov, int iovcnt);
 
 /* "Downstream" error notification */
 typedef void (*fistSinkErrorFn_t)(
@@ -41,7 +42,7 @@ struct FistSource {
 };
 
 struct FistSink {
-	fistWriteFn_t write;
+	fistWritevFn_t writev;
 	fistSinkErrorFn_t error;
 	fistFlushFn_t flush;
 	struct FistSource* source;
